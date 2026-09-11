@@ -9,3 +9,7 @@ build/
 dist/
 .venv/
 venv/
+
+# Track bundled templates and atlases only; retain global rules for other data.
+!/fmriproc/resources/**/*.nii
+!/fmriproc/resources/**/*.nii.gz
