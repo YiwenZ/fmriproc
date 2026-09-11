@@ -1,0 +1,42 @@
+# CARE Movie FSL preprocessing configuration.
+# Uses FSL for all steps: reorient2std, BET, FAST, MCFLIRT, epi_reg, FLIRT, FNIRT, applywarp.
+runtime:
+  backend: fsl
+  registration_backend: fsl
+  mode: tested
+
+input_selection:
+  expected_volumes:
+    movieA: 1605
+    movieB: 1705
+    movieC: 1653
+
+bold:
+  dummy_scans: 10
+  slice_timing:
+    enabled: false
+    source: fsl_pattern
+    fsl_direction: 3
+    fsl_interleaved: odd
+  tr: auto
+  highpass: 0.01
+  lowpass: null
+  grand_mean: 10000
+  smooth_fwhm: 6
+
+fsl:
+  bet:
+    fractional_intensity: 0.1
+    bias_neck_cleanup: true
+    robust_center: true
+  fast:
+    channels: 1
+    image_type: 1
+    classes: 3
+  flirt:
+    anat_to_mni_dof: 12
+  fnirt:
+    config: T1_2_MNI152_2mm.cnf
+  templates:
+    mni152_1mm_brain: "${FSLDIR}/data/standard/MNI152_T1_1mm_brain.nii.gz"
+    mni152_2mm_brain: "${FSLDIR}/data/standard/MNI152_T1_2mm_brain.nii.gz"

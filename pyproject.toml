@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fmriproc"
+version = "0.1.0"
+description = "Multi-backend fMRI preprocessing pipeline (AFNI+ANTs / FSL) with Python orchestration and visual QC"
+requires-python = ">=3.10"
+dependencies = [
+  "PyYAML>=6.0",
+  "nibabel>=5.0",
+  "numpy>=1.24",
+  "pandas>=2.0",
+  "matplotlib>=3.7",
+  "brainspace>=0.2.0",
+  "igraph>=0.10",
+]
+
+[project.scripts]
+fmriproc = "fmriproc.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["fmriproc*"]
+
+[tool.setuptools.package-data]
+fmriproc = [
+  "bash/*.sh",
+  "resources/templates/MNI152/*.nii.gz",
+  "resources/atlas/Gordon/*",
+  "resources/atlas/Yeo_MNI/*.nii.gz",
+  "resources/atlas/Yeo_MNI/Schaefer2018_3mm/*.nii.gz",
+  "resources/atlas/Yeo_MNI/freeview_lut/*.txt",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["../development/tests"]
+pythonpath = ["."]

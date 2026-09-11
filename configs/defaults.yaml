@@ -1,0 +1,205 @@
+dataset:
+  bids_dir: ../Data/Dataset/NIFTI
+  prep_dir: ../Data/Dataset/Prep
+
+runtime:
+  conda_env: image
+  backend: afni
+  registration_backend: ants_if_available
+  mode: tested
+
+anat:
+  strategy: session
+  fallback: later_then_earlier
+  segmentation_backend: samseg_if_available
+  samseg:
+    threads: 4
+
+input_selection:
+  duplicate_run_policy: longest_then_latest
+  expected_volumes: {}
+  expected_volumes_missing: warn
+
+bold:
+  dummy_scans: 10
+  slice_timing:
+    enabled: false
+    source: afni_pattern
+    afni_pattern: alt+z
+  tr: auto
+  highpass: 0.01
+  lowpass: null
+  nuisance:
+    # Choose a complete recipe; changing model does not toggle wm/csf automatically.
+    # aCompCor: keep wm/csf false to omit EXTRA tissue-mean regressors.
+    # basic_6 or friston_24: set wm/csf true for a motion + tissue-mean recipe.
+    # These recipes are starting points; select and validate for your analysis.
+    wm: false                  # Add WM mean signal; does not control WM aCompCor PCs.
+    csf: false                 # Add CSF mean signal; does not control CSF aCompCor PCs.
+    motion: true               # Legacy field; current builder selects motion via model.
+    model: acompcor            # acompcor | basic_6 | friston_24 | none; takes precedence.
+    motion_model: basic_6      # Legacy fallback if model is absent and aCompCor is off.
+    global_signal: false       # Reserved field; current builder does not implement GSR.
+    acompcor:
+      enabled: true            # Legacy selector if model is absent; model otherwise wins.
+      n_components: 5          # Per mask: 5 WM + 5 CSF PCs, plus 6 motion columns = 16.
+      masks: [wm, csf]         # Tissue masks for PCA, independent of wm/csf mean switches.
+  grand_mean: 10000
+  smooth_fwhm: 6
+
+qc:
+  report_after_run: true
+  snapshots:
+    enabled: true
+    n_slices: 9
+    orientation: axial
+    overlay_alpha: 0.35
+  readme:
+    enabled: true
+  motion_plot:
+    enabled: true
+
+metrics:
+  backend: afni
+  default:
+    - fc
+  input:
+    space: mni152
+    smoothed: false
+    fc_variant: raw
+
+  combat:
+    enabled: false
+    backend: neurocombat
+    covariates_csv: null
+    id_column: ID
+    batch_column: Site
+    match_keys: [ID, session, task]
+    group_by: [session, modal, atlas]
+    required_covariates:
+      continuous: [Age, MeanFD]
+      categorical: [Sex]
+    optional_covariates:
+      continuous: []
+      categorical: []
+    min_samples_per_group: 8
+    min_batches_per_group: 2
+    min_samples_per_batch: 2
+  atlases:
+    default:
+      - Schaefer400_7Networks
+      - Gordon
+    resolution: auto
+  netcorr:
+    fisher_z: true
+    save_individual_roi_timeseries: true
+    push_thru_many_zeros: true
+  group_mask:
+    enabled: true
+    apply: true
+    default_constraint: grp_mask_thr70.nii.gz
+    qc_snapshot_mask: grp_mask_thr100.nii.gz
+    min_valid_subjects: 1
+    selection:
+      require_motion_qc: true
+      motion:
+        mean_fd_max: 0.5
+        fd_outlier_ratio_max: 0.2
+        fd_outlier_threshold: 0.5
+    thresholds:
+      - 0.7
+      - 1.0
+  qc:
+    min_roi_coverage: 0.5
+    report_after_run: true
+  graph:
+    enabled: true
+    backend: python_igraph
+    densities:
+      - 0.10
+      - 0.15
+      - 0.20
+      - 0.25
+    random_networks: 100
+    seed: 112
+    seed_strategy: run_hash
+    require_leiden: false
+    keep_adjacency: true
+  gradient:
+    enabled: true
+    backend: brainspace
+    n_components: 3
+    approach: dm
+    kernel: normalized_angle
+    alignment: procrustes
+    sparsity: 0.9
+    random_state: 42
+    reference:
+      scope: condition_group
+      min_runs_per_group: 2
+      unmapped_task_policy: fail
+      condition_groups:
+        movie:
+          - movieA
+          - movieB
+          - movieC
+    network_summary:
+      enabled: true
+      min_rois_per_network: 2
+  dataset:
+    prep_dir: null
+    output_dir: derivatives/metrics
+    run_missing: false
+    include_existing_metrics_only: true
+    inclusion:
+      require_group_mask: true
+      require_motion_qc: true
+      motion:
+        mean_fd_max: 0.5
+        fd_outlier_ratio_max: 0.2
+        fd_outlier_threshold: 0.5
+  regional:
+    enabled: true
+    backend: afni
+    metrics:
+      - alff
+      - falff
+      - reho
+    input:
+      space: mni152
+      smoothed: false
+    frequency:
+      low_hz: 0.01
+      high_hz: 0.1
+    reho:
+      neighborhood: 27
+    group_mask:
+      apply: true
+      constraint: grp_mask_thr70.nii.gz
+    standardize:
+      zscore_within_mask: true
+    roi_summary:
+      atlases:
+        - Schaefer400_7Networks
+        - Gordon
+      min_roi_coverage: 0.5
+
+cleanup:
+  intermediate: true
+  keep_failed_workdir: true
+  keep_step_outputs: true
+
+templates:
+  mni152_default_resolution: 3mm
+  mni152_3mm_brain: fmriproc/resources/templates/MNI152/MNI152_T1_3mm_brain.nii.gz
+  mni152_2mm_brain: fmriproc/resources/templates/MNI152/MNI152_T1_2mm_brain.nii.gz
+  mni152_1mm_brain: fmriproc/resources/templates/MNI152/MNI152_T1_1mm_brain.nii.gz
+
+hpc:
+  scheduler: lsf
+  queue: general
+  group: compute-perlmansusan
+  docker_image: null
+  n_cores: 4
+  memory_mb: 32000
+  sleep_seconds_between_jobs: 0.5

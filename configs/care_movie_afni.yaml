@@ -1,0 +1,11 @@
+input_selection:
+  expected_volumes:
+    movieA: 1605
+    movieB: 1705
+    movieC: 1653
+
+runtime:
+  registration_backend: afni
+
+bold:
+  smooth_fwhm: 4
