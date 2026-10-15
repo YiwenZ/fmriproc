@@ -1,7 +1,47 @@
 # fmriproc
 
-Multi-backend fMRI preprocessing pipeline with Python orchestration and Bash command functions.
-Supports **AFNI + ANTs** and **FSL** backends, selectable via configuration.
+### Why another fMRI preprocessing pipeline?
+There is no shortage of fMRI preprocessing pipelines these days. If you are looking for a well-established and widely accepted workflow, **fMRIPrep** is probably one of the best choices out there. **SPM** is another great option, especially if you prefer a more traditional approach.
+
+But neither is perfect, and each comes with its own trade-offs.
+
+For example, registration in SPM sometimes requires extra attention. **fMRIPrep**, while widely regarded as a standard preprocessing solution, can be surprisingly demanding in terms of computing resources and storage. A dataset that originally takes up just a few hundred megabytes can end up generating tens of gigabytes of derivatives and intermediate files, depending on the configuration. Since fMRIPrep integrates multiple neuroimaging software packages, running it can also require a fairly complex software environment, often on a computing cluster. Even if you have the computing power, storing all those outputs can become a headache.
+
+Another consideration is anatomical processing. Skull stripping and tissue segmentation are essential steps, and FreeSurfer provides excellent tools for these tasks. However, a full anatomical processing workflow can be time-consuming, especially when a simpler solution would be sufficient for your analysis. For example, if all I need is tissue segmentation, why not just use FreeSurfer's `run_samseg` directly instead of the `recon-all`?
+
+Then there is the question of software dependencies. Many preprocessing workflows combine commands from AFNI, FSL, ANTs, and other packages. While this makes it possible to take advantage of the strengths of different tools, switching between software packages can also introduce additional complexity in image orientations, coordinate conventions, and transformations.
+
+Personally, I think **AFNI and FSL are both powerful enough to handle a complete fMRI preprocessing workflow on their own** for many common applications. ANTs offers excellent nonlinear registration, but AFNI and FSL also provide reliable registration tools that are perfectly suitable for many preprocessing tasks. This becomes particularly relevant when working on an HPC cluster, where you may not have permission to install software yourself. If you need Docker or other containers to manage your environment, getting multiple neuroimaging packages to work together can be another challenge.
+
+And finally, there is something that I think deserves more attention: **the outputs themselves**. If you are new to neuroimaging, figuring out what all those intermediate files mean, why they have different names, and in what order the processing steps were performed can be frustrating. Sometimes, understanding the outputs feels almost as complicated as understanding the preprocessing itself.
+
+### So, what if we made things simpler?
+
+That was the motivation behind **fMRIProc**. I wanted a pipeline where I could simply choose **AFNI or FSL as the main preprocessing backend**, run the entire workflow, and get outputs organized in the order they were generated:
+bold_s01_*
+bold_s02_*
+...
+or
+t1_s01_*
+t1_s02_*
+...
+No need to guess what happened along the way. Just follow the steps, and you can easily see how your data were processed.
+
+I also wanted the flexibility to use additional software **only when I actually need it**. Have FreeSurfer installed but don't want to run a full FreeSurfer workflow? Just use `run_samseg` for tissue segmentation (or just use AFNI/FSL to do the job). Have ANTs available? Great, you can use it for registration. Otherwise, AFNI or FSL can handle the job without requiring extra dependencies.
+
+In short, fMRIProc brings together the preprocessing steps I regularly use and have tested in my own neuroimaging research. You can choose an **AFNI-based or FSL-based workflow**, keep the processing steps organized, and obtain clearly labeled outputs that make it easy to understand what happened to your data.
+
+### Beyond preprocessing
+
+Of course, preprocessing is only part of the story.
+
+In my own research, I often need to examine head motion, check registration quality, identify participants who pass quality-control criteria, and prepare datasets for group-level analyses. So I also included several **quality-control (QC) and analysis utilities** that I find particularly useful. These tools can help you review motion statistics and registration quality, select participants based on QC results, and generate group-level masks for subsequent analyses. The pipeline also includes functions for calculating commonly used resting-state fMRI metrics, including **functional connectivity (FC), ALFF, fALFF, and ReHo**. Since the workflow is orchestrated in Python, I have also integrated tools for **graph-theoretical analysis (`python-igraph`) and functional connectivity gradients (`BrainSpace`)**, making it easier to move from preprocessing to network-level analyses. One small feature I particularly like is the FC matrix visualization function. It supports common functional brain parcellations, including Schaefer-400 with Yeo's 7-network organization and the Gordon atlas, and can display network-specific color bars alongside the connectivity matrix. It is a simple addition, but it makes connectivity figures much easier to read and present.
+
+### A final note
+fMRIProc is not intended to replace fMRIPrep, SPM, or any other established preprocessing software. Those are excellent tools, and they remain great choices for many studies. This project is simply my attempt to make fMRI preprocessing more flexible, easier to follow, and less demanding in terms of software dependencies and storage, based on the workflows I have found useful in my own research.
+
+If you are looking for a relatively lightweight AFNI- or FSL-based preprocessing workflow, or just want to better understand what happens to your images at each step, I hope you will find something useful here.
+
 
 ## Deployable Folder
 
